@@ -1,0 +1,2 @@
+test:
+	lsc jsg.ls
