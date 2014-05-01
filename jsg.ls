@@ -23,8 +23,8 @@ template_m = fs.readFileSync path.resolve('template_implementation.m'), 'utf8'
 ## ObjC_Implementation =
 
 type_mapping =
-    string: \NSString
-    array: \NSArray
+    \string : \NSString
+    \array : \NSArray
 
 make_properties = ->
     result = ""
@@ -38,10 +38,25 @@ make_properties = ->
             ## TODO: must support weak
             if value.type is \string or \string in value.type then \copy else \strong
 
+        r = r.replace /{Property_ClassName}/ ->
+            name = ""
+            classType =
+                if value.type in type_mapping
+                    type_mapping[value.type]
+                else
+                    "NSString"
+
+            throw "Must had classType, #{value.type} -> #classType" if not classType
+            name += classType
+            name
+
         r = r.replace /{Property_Protocal}/ ->
-            \<Optional> if \null in value.type if value.required
             ## TODO: array need to create class name classname->Classname
-            ""
+            if \null in value.type
+                \<Optional>
+            else
+                ""
+
         result += r
     result
 
