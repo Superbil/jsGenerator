@@ -69,5 +69,11 @@ make_header = ->
     h = h.replace /{ObjC_Properties}/g make_properties! if schema.properties
     h
 
-console.log make_header!          #log
-## console.log template_m          #log
+make_implement = ->
+   m = template_m
+   m = m.replace /{ObjC_ClassName}/g prefixString + schema.title if prefixString + schema.title
+   m = m.replace /{ObjC_Implementation}/g ""
+   m
+
+#console.log make_header!          #log
+#console.log make_implement!          #log

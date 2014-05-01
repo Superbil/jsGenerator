@@ -1,5 +1,5 @@
 //
-//  {ClassName}.m
+//  {ObjC_ClassName}.m
 //
 //  Created by Superbil on 2014/4/22.
 //
