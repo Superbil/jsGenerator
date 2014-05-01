@@ -3,11 +3,27 @@
 fs = require 'fs'
 path = require 'path'
 
-schemadata = fs.readFileSync path.resolve('link.json'), 'utf8'
+argv = require 'optimist'
+  .usage('Usage: $0 -json <json file> -output [folder]')
+
+  .demand(\json)
+  .describe(\json, 'The JSON Schema file to create.')
+  .alias(\json, \j)
+
+  .options( \output,
+      alias: \o
+      default: 'output'
+  )
+  .describe(\output, 'Where to put output.')
+
+  .argv
+
+schemadata = fs.readFileSync path.resolve(argv.json), 'utf8'
 schema = JSON.parse schemadata
-console.log schema                 # log
+#console.log schema                 # log
 
 prefixString = "Popolo"
+className = prefixString + schema.title
 template_h = fs.readFileSync path.resolve('template_header.h'), 'utf8'
 template_property = '''
 
@@ -64,16 +80,19 @@ make_header = ->
     h = template_h
     h = h.replace /{JSONSchemaURL}/g schema.id if schema.id
     h = h.replace /{JSONSchemaTitle}/g schema.title if schema.title
-    h = h.replace /{ObjC_ClassName}/g prefixString + schema.title if prefixString + schema.title
+    h = h.replace /{ObjC_ClassName}/g prefixString + schema.title if className
     h = h.replace /{JSONSchemaDescription}/g schema.description if schema.description
     h = h.replace /{ObjC_Properties}/g make_properties! if schema.properties
     h
 
 make_implement = ->
    m = template_m
-   m = m.replace /{ObjC_ClassName}/g prefixString + schema.title if prefixString + schema.title
+   m = m.replace /{ObjC_ClassName}/g prefixString + schema.title if className
    m = m.replace /{ObjC_Implementation}/g ""
    m
 
-#console.log make_header!          #log
-#console.log make_implement!          #log
+fs.mkdirSync path.resolve argv.output if not fs.existsSync path.resolve argv.output
+## console.log make_header!        #log
+fs.writeFileSync path.resolve(argv.output, "#{className}.h"), make_header!
+## console.log make_implement!     #log
+fs.writeFileSync path.resolve(argv.output, "#{className}.m"), make_implement!
