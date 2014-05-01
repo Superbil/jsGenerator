@@ -35,8 +35,8 @@ make_properties = ->
         r = r.replace /{Property_Description}/ value.description if value.description
 
         r = r.replace /{Property_Status}/ ->
-        ## TODO: must support weak
-            if value.type == 'string' then \copy else \strong
+            ## TODO: must support weak
+            if value.type is \string or \string in value.type then \copy else \strong
 
         r = r.replace /{Property_Protocal}/ ->
             \<Optional> if \null in value.type if value.required
