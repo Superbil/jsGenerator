@@ -3,35 +3,56 @@
 fs = require 'fs'
 path = require 'path'
 
-schemafile = path.resolve 'link.json'
-schemadata = fs.readFileSync schemafile, 'utf8'
-raw = JSON.parse schemadata
-console.log raw
+schemadata = fs.readFileSync path.resolve('link.json'), 'utf8'
+schema = JSON.parse schemadata
+console.log schema                 # log
 
 prefixString = "Popolo"
 template_h = fs.readFileSync path.resolve('template_header.h'), 'utf8'
-template_property = "
+template_property = '''
+
 /**
  {Property_Title}
 
  {Property_Description}
  */
-@property (nonatomic, {Property_status}) {Property_ClassName} *{Property_Name};
-"
+@property (nonatomic, {Property_Status}) {Property_ClassName}{Property_Protocal} *{Property_Name};
+
+'''
 template_m = fs.readFileSync path.resolve('template_implementation.m'), 'utf8'
 ## ObjC_Implementation =
 
-template_h.replace /{ObjC_ClassName}/g "Link"
+type_mapping =
+    string: \NSString
+    array: \NSArray
 
+make_properties = ->
+    result = ""
+    for key, value of schema.properties
+        r = template_property
+        r = r.replace /{Property_Name}/ key
+        r = r.replace /{Property_Title}/ key
+        r = r.replace /{Property_Description}/ value.description if value.description
 
-for key, value of raw
-    switch key
-    case \id
-        then \id
-    case \title
-        then \title
-    case \description
-        then \description
-    case \properties
-        for pk, pv of value
-            console.log "#pk, #pv"
+        r = r.replace /{Property_Status}/ ->
+        ## TODO: must support weak
+            if value.type == 'string' then \copy else \strong
+
+        r = r.replace /{Property_Protocal}/ ->
+            \<Optional> if \null in value.type if value.required
+            ## TODO: array need to create class name classname->Classname
+            ""
+        result += r
+    result
+
+make_header = ->
+    h = template_h
+    h = h.replace /{JSONSchemaURL}/g schema.id if schema.id
+    h = h.replace /{JSONSchemaTitle}/g schema.title if schema.title
+    h = h.replace /{ObjC_ClassName}/g prefixString + schema.title if prefixString + schema.title
+    h = h.replace /{JSONSchemaDescription}/g schema.description if schema.description
+    h = h.replace /{ObjC_Properties}/g make_properties! if schema.properties
+    h
+
+console.log make_header!          #log
+## console.log template_m          #log
