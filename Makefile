@@ -1,2 +1,8 @@
+JSONS += json/*
+OUTPUT = output
+
 test:
-	lsc jsg.ls
+	@for f in $(JSONS); do \
+		echo "Building $$f" ;\
+		./jsg.ls -o $(OUTPUT) -j $$f ;\
+	done;
