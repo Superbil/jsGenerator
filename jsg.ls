@@ -26,13 +26,13 @@ throw "Must had schema.title" if not schema.title
 
 prefixString = "Popolo"
 
-newTitle = ->
+newTitle = (inputTitle) ->
   capitaliseFirstLetter = (name) -> name.charAt(0).toUpperCase! + name.slice 1
   title = ""
-  [title += capitaliseFirstLetter s for s in schema.title.split " "]
+  [title += capitaliseFirstLetter s for s in inputTitle.split " "]
   ## remove space between words
   title.replace " ", ""
-className = prefixString + newTitle!
+className = prefixString + newTitle schema.title
 
 template_h = fs.readFileSync path.resolve('template_header.h'), 'utf8'
 template_property = '''
@@ -67,17 +67,35 @@ make_properties = ->
       classType =
         if value.type in type_mapping
           type_mapping[value.type]
+        else if value.type is /array/
+          \NSArray
         else
-          "NSString"
+          \NSString
       throw "Must had classType, #{value.type} -> #classType" if not classType
       name += classType
       name
+    #console.log "value key:#{key}  type: #{value.type}"
     p = p.replace /{Property_Protocal}/ ->
-      ## TODO: array need to create class name classname->Classname
+      c = []
+      if value.type is /array/
+        findName = ->
+          n = ""
+          [n = v for k, v of value.items]
+          n = n.split /.+\/(\w+).json.?$/
+          n = n[1].replace /_/ " "
+          prefixString + newTitle n
+        c += findName!
+
       if value.type? and \null in value.type
-        \<Optional>
+        c += \Optional
       else
         ""
+
+      if c.length > 0 then
+        "<#c>"
+      else
+        ""
+
     result += p
   result
 
