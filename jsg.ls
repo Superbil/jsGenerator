@@ -1,4 +1,5 @@
 #!/usr/bin/env lsc
+## -*- tab-width: 2; -*-
 
 fs = require 'fs'
 path = require 'path'
@@ -26,11 +27,11 @@ throw "Must had schema.title" if not schema.title
 prefixString = "Popolo"
 
 newTitle = ->
-    capitaliseFirstLetter = (name) -> name.charAt(0).toUpperCase! + name.slice 1
-    title = ""
-    [title += capitaliseFirstLetter s for s in schema.title.split " "]
-    ## remove space between words
-    title.replace " ", ""
+  capitaliseFirstLetter = (name) -> name.charAt(0).toUpperCase! + name.slice 1
+  title = ""
+  [title += capitaliseFirstLetter s for s in schema.title.split " "]
+  ## remove space between words
+  title.replace " ", ""
 className = prefixString + newTitle!
 
 template_h = fs.readFileSync path.resolve('template_header.h'), 'utf8'
@@ -45,60 +46,55 @@ template_property = '''
 
 '''
 template_m = fs.readFileSync path.resolve('template_implementation.m'), 'utf8'
-## ObjC_Implementation =
 
 type_mapping =
-    \string : \NSString
-    \array : \NSArray
+  \string : \NSString
+  \array : \NSArray
 
 make_properties = ->
-    result = ""
-    for key, value of schema.properties
-        r = template_property
-        r = r.replace /{Property_Name}/ key
-        r = r.replace /{Property_Title}/ key
-        r = r.replace /{Property_Description}/ value.description if value.description
-
-        r = r.replace /{Property_Status}/ ->
-            ## TODO: must support weak
-            if value.type is \string or \string in value.type then \copy else \strong
-
-        r = r.replace /{Property_ClassName}/ ->
-            name = ""
-            classType =
-                if value.type in type_mapping
-                    type_mapping[value.type]
-                else
-                    "NSString"
-
-            throw "Must had classType, #{value.type} -> #classType" if not classType
-            name += classType
-            name
-
-        r = r.replace /{Property_Protocal}/ ->
-            ## TODO: array need to create class name classname->Classname
-            if \null in value.type
-                \<Optional>
-            else
-                ""
-
-        result += r
-    result
+  result = ""
+  for key, value of schema.properties
+    p = template_property
+    p = p.replace /{Property_Name}/ key
+    p = p.replace /{Property_Title}/ key
+    p = p.replace /{Property_Description}/ value.description if value.description
+    p = p.replace /{Property_Status}/ ->
+      ## TODO: must support weak
+      if value.type is \string then \copy else \strong
+    p = p.replace /{Property_ClassName}/ ->
+      name = ""
+      t = typeof value.type
+      classType =
+        if value.type in type_mapping
+          type_mapping[value.type]
+        else
+          "NSString"
+      throw "Must had classType, #{value.type} -> #classType" if not classType
+      name += classType
+      name
+    p = p.replace /{Property_Protocal}/ ->
+      ## TODO: array need to create class name classname->Classname
+      if \null in value.type
+        \<Optional>
+      else
+        ""
+    result += p
+  result
 
 make_header = ->
-    h = template_h
-    h = h.replace /{JSONSchemaURL}/g schema.id if schema.id
-    h = h.replace /{JSONSchemaTitle}/g schema.title
-    h = h.replace /{ObjC_ClassName}/g className
-    h = h.replace /{JSONSchemaDescription}/g schema.description if schema.description
-    h = h.replace /{ObjC_Properties}/g make_properties! if schema.properties
-    h
+  h = template_h
+  h = h.replace /{JSONSchemaURL}/g schema.id if schema.id
+  h = h.replace /{JSONSchemaTitle}/g schema.title
+  h = h.replace /{ObjC_ClassName}/g className
+  h = h.replace /{JSONSchemaDescription}/g schema.description if schema.description
+  h = h.replace /{ObjC_Properties}/g make_properties! if schema.properties
+  h
 
 make_implement = ->
-   m = template_m
-   m = m.replace /{ObjC_ClassName}/g className
-   m = m.replace /{ObjC_Implementation}/g ""
-   m
+  m = template_m
+  m = m.replace /{ObjC_ClassName}/g className
+  m = m.replace /{ObjC_Implementation}/g ""
+  m
 
 fs.mkdirSync path.resolve argv.output if not fs.existsSync path.resolve argv.output
 ## console.log make_header!        #log
