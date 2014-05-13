@@ -76,7 +76,7 @@ make_properties = ->
       name
     #console.log "value key:#{key}  type: #{value.type}"
     p = p.replace /{Property_Protocal}/ ->
-      c = []
+      c = ""
       if value.type is /array/
         findName = ->
           n = ""
@@ -84,7 +84,7 @@ make_properties = ->
           n = n.split /.+\/(\w+).json.?$/
           n = n[1].replace /_/ " "
           prefixString + newTitle n
-        c += findName!
+        c += "Optional, #{findName!}"
 
       if value.type? and \null in value.type
         c += \Optional
