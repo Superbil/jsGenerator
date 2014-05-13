@@ -74,7 +74,7 @@ make_properties = ->
       name
     p = p.replace /{Property_Protocal}/ ->
       ## TODO: array need to create class name classname->Classname
-      if \null in value.type
+      if value.type? and \null in value.type
         \<Optional>
       else
         ""
